@@ -59,7 +59,7 @@
         <!--begin::Sidebar Brand-->
         <div class="sidebar-brand">
             <!--begin::Brand Link-->
-            <a href="/admin" class="brand-link">
+            <a href="{{route('admin')}}" class="brand-link">
                 <span class="brand-text fw-light">Админ-панель</span>
                 <!--end::Brand Text-->
             </a>
@@ -88,12 +88,12 @@
                         </a>
                         <ul class="nav nav-treeview" role="navigation" aria-label="Navigation 5">
                             <li class="nav-item">
-                                <a href="./widgets/small-box.html" class="nav-link">
+                                <a href="{{route('admin.vacancies.create')}}" class="nav-link">
                                     <p>Добавить вакансию</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="./widgets/info-box.html" class="nav-link">
+                                <a href="{{route('admin.vacancies')}}" class="nav-link">
                                     <p>Просмотреть вакансии</p>
                                 </a>
                             </li>
