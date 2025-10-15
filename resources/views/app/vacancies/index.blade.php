@@ -1,4 +1,4 @@
-@extends('layout.app')
+@extends('app.layout.app')
 
 @section('title', 'Электронная ярмарка вакансий')
 
@@ -10,9 +10,9 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">{{$vacancy['title']}}</h5>
-                        <p class="card-text">{{$vacancy['price']}}</p>
-                        <p class="card-text">{{$vacancy['description']}}</p>
+                        <h5 class="card-title">{{$vacancy->title}}</h5>
+                        <p class="card-text">{{$vacancy->salary}} руб.</p>
+                        <p class="card-text">{{$vacancy->responsibilities}}</p>
                     </div>
                 </div>
             </div>
