@@ -131,7 +131,6 @@
 
                     @yield('content')
 
-
                 </div>
                 <!--end::Row-->
             </div>

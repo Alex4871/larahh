@@ -10,3 +10,4 @@ Route::get('/', IndexController::class)->name('home');
 Route::get('/admin', [MainController::class, 'index'])->name('admin');
 Route::get('/admin/vacancies', [VacancyController::class, 'index'])->name('admin.vacancies');
 Route::get('/admin/vacancies/create', [VacancyController::class, 'create'])->name('admin.vacancies.create');
+Route::post ('/admin/vacancies', [VacancyController::class, 'store'])->name('admin.vacancies.store');
