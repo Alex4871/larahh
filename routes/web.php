@@ -1,13 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AdminControllers\MainController;
-use App\Http\Controllers\AppControllers\VacancyControllers\IndexController;
-use App\Http\Controllers\AdminControllers\VacancyController;
+use App\Http\Controllers\JournalController;
+use App\Http\Controllers\ArticleController;
 
-Route::get('/', IndexController::class)->name('home');
+Route::view('/', 'index')->name('home');
 
-Route::get('/admin', [MainController::class, 'index'])->name('admin');
-Route::get('/admin/vacancies', [VacancyController::class, 'index'])->name('admin.vacancies');
-Route::get('/admin/vacancies/create', [VacancyController::class, 'create'])->name('admin.vacancies.create');
-Route::post ('/admin/vacancies', [VacancyController::class, 'store'])->name('admin.vacancies.store');
+Route::get('/journal/create', [JournalController::class, 'create'])->name('journal.create');
+Route::post('/journal', [JournalController::class, 'store'])->name('journal.store');
+
+Route::get('/journal/{journal}/article/create', [ArticleController::class, 'create'])->name('article.create');
+Route::post('/journal/{journal}/article/create', [ArticleController::class, 'addAuthor'])->name('article.addAuthor');
+Route::post('/journal/{journal}/article', [ArticleController::class, 'store'])->name('article.store');
+Route::get('journal/{journal}/xml', [JournalController::class, 'xml'])->name('journal.xml');
