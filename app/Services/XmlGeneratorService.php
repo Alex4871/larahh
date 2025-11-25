@@ -1,0 +1,536 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Article;
+use App\Models\Author;
+use App\Models\Journal;
+use DOMDocument;
+use DOMElement;
+use DOMNode;
+
+class XmlGeneratorService
+{
+    public function __construct(
+        protected DomDocument $dom
+    )
+    {   $this->dom->encoding = 'UTF-8';
+        $this->dom->formatOutput = true;
+    }
+
+    public function generateXML(Journal $journal, Article $article): false|string
+    {
+        $articleNode = $this->createOneNode(
+            'article',
+            $this->dom,
+            '',
+            [
+                'xmlns:mml' => 'http://www.w3.org/1998/Math/MathML',
+                'xmlns:xlink' => 'http://www.w3.org/1999/xlink',
+                'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
+                'xmlns:ali' => 'http://www.niso.org/schemas/ali/1.0/',
+                'article-type' => 'other',
+                'dtd-version' => '1.2',
+                'xml:lang' => 'en'
+            ]
+
+        );
+        $frontNode = $this->createOneNode('front', $articleNode);
+        /*  <journal-meta>  */
+        $this->generateJournalMeta($frontNode, $journal);
+        /*  <article-meta>  */
+        $this->generateArticleMeta($frontNode, $article);
+
+        $this->createOneNode('body', $articleNode);
+
+        $backNode = $this->createOneNode('back', $articleNode);
+        $this->generateRefList($backNode, $article);
+
+        return $this->dom->saveXML();
+    }
+
+    /**
+     * Создаем блок <journal-meta>
+     * @param DOMElement|DOMNode $parent - родитель для блока <journal-meta>
+     * @param Journal $journal - модель журнала
+     * @return void
+     * @throws \DOMException
+     */
+    private function generateJournalMeta(DOMElement|DOMNode $parent, Journal $journal): void
+    {
+        $journalMeta = $parent->appendChild($this->dom->createElement('journal-meta'));
+
+        $this->createOneNode(
+            'journal-id',
+            $journalMeta,
+            $journal->title_en,
+            ['journal-id-type' => 'publisher-id']
+        );
+
+        $journalTitleGroup = $this->createOneNode('journal-title-group', $journalMeta);
+
+        $this->createOneNode(
+            'journal-title',
+            $journalTitleGroup,
+            $journal->title_en,
+            ['xml:lang' => 'en']
+        );
+
+        $transTitleGroup = $this->createOneNode(
+            'trans_title_group',
+            $journalTitleGroup,
+            '',
+            ['xml:lang' => 'ru']
+        );
+
+        $this->createOneNode('trans_title', $transTitleGroup, $journal->title_ru);
+
+        $this->createOneNode(
+            'issn',
+            $journalMeta,
+            $journal->issn,
+            ['publication-format' => 'print']
+        );
+
+        $publisher = $this->createOneNode('publisher', $journalMeta);
+        $this->createOneNode(
+            'publisher-name',
+            $publisher,
+            $journal->publisher,
+            ['xml:lang' => 'en']
+        );
+    }
+
+    /**
+     * Создаем блок <article-meta>
+     * @param DOMElement|DOMNode $parent - родитель для блока <article-meta>
+     * @param Article $article - модель статьи
+     * @return void
+     * @throws \DOMException
+     */
+    private function generateArticleMeta(DOMElement|DOMNode $parent, Article $article): void
+    {
+        $articleMeta = $this->createOneNode('article-meta', $parent);
+        $this->createOneNode(
+            'article-id',
+            $articleMeta,
+            $article->id,
+            ['pub-id-type' => 'publisher-id']
+        );
+        $this->createOneNode(
+            'article-id',
+            $articleMeta,
+            $article->doi,
+            ['pub-id-type' => 'doi']
+        );
+
+        $this->generateArticleCategories($articleMeta, $article);
+        $this->generateTitleGroup($articleMeta, $article);
+        $this->generateContribGroup($articleMeta, $article);
+        $this->generateAffAlternatives($articleMeta, $article);
+        $this->generatePubDate($articleMeta, $article);
+
+        $this->createOneNode('volume', $articleMeta, $article->journal->volume);
+        $this->createOneNode('issue', $articleMeta, $article->journal->issue);
+        $this->createOneNode('issue-title', $articleMeta, '', ['xml:lang' => 'en']);
+        $this->createOneNode('issue-title', $articleMeta, '', ['xml:lang' => 'ru']);
+        $this->createOneNode('fpage', $articleMeta, $article->f_page);
+        $this->createOneNode('lpage', $articleMeta, $article->l_page);
+
+        $this->generateHistory($articleMeta, $article);
+        $this->generatePermissions($articleMeta, $article);
+
+        $this->createOneNode('self-uri', $articleMeta, 'url адрес', ['xlink:href' => 'url адрес']);
+        $this->generateAbstract($articleMeta, $article);
+        $this->generateKwdGroup($articleMeta, $article);
+
+        $this->createOneNode('funding-group', $articleMeta);
+    }
+
+
+    /**
+     * Создаем блок <article-categories>
+     * @param DOMElement|DOMNode $parent - родитель для блока <article-categories>
+     * @param Article $article - модель статьи
+     * @return void
+     * @throws \DOMException
+     */
+    private function generateArticleCategories(DOMElement|DOMNode $parent, Article $article): void
+    {
+        $articleCategories = $this->createOneNode('article-categories', $parent);
+        $subjGroupEng = $this->createOneNode(
+            'subj-group',
+            $articleCategories,
+            '',
+            [
+                'subj-group-type' => 'toc-heading',
+                'xml:lang' => 'en'
+            ]
+        );
+        $this->createOneNode('subject', $subjGroupEng, $article->category_en);
+
+        $subjGroupRu = $this->createOneNode(
+            'subj-group',
+            $articleCategories,
+            '',
+            [
+                'subj-group-type' => 'toc-heading',
+                'xml:lang' => 'ru'
+            ]
+        );
+        $this->createOneNode('subject', $subjGroupRu, $article->category_ru);
+
+        $subjGroupRu = $this->createOneNode(
+            'subj-group',
+            $articleCategories,
+            '',
+            [
+                'subj-group-type' => 'article-type'
+            ]
+        );
+        $this->createOneNode('subject', $subjGroupRu, $article->type);
+    }
+
+    /**
+     * Создаем блок <title-group>
+     * @param DOMElement|DOMNode $parent - одитель для блока <title-group>
+     * @param Article $article - модель статьи
+     * @return void
+     * @throws \DOMException
+     */
+    private function generateTitleGroup(DOMElement|DOMNode $parent, Article $article): void
+    {
+        $titleGroup = $this->createOneNode('title-group', $parent);
+        $this->createOneNode(
+            'article-title',
+            $titleGroup,
+            $article->title_en,
+            ['xml:lang' => 'en']
+        );
+        $transTitleGroup = $this->createOneNode(
+            'trans-title-group',
+            $titleGroup,
+            '',
+            ['xml:lang' => 'ru']
+        );
+        $this->createOneNode(
+            'trans-title',
+            $transTitleGroup,
+            $article->title_ru,
+        );
+    }
+
+    /**
+     * Создаем блок <contrib-group> - авторы
+     * @param DOMElement|DOMNode $parent - родитель для блока <contrib-group>
+     * @param Article $article - модель статьи
+     * @return void
+     * @throws \DOMException
+     */
+    private function generateContribGroup(DOMElement|DOMNode $parent, Article $article)
+    {
+        $authors = $article->authors;
+        $contribGroup = $this->createOneNode(
+            'contrib-group',
+            $parent
+        );
+        foreach ($authors as $author) {
+            $this->generateOneContrib($contribGroup, $author);
+        }
+    }
+
+    /**
+     * Создаем блок <contrib> - один аавтор
+     * @param DOMElement|DOMNode $parent - родитель для блока <contrib>
+     * @param Author $author
+     * @return void
+     * @throws \DOMException
+     */
+    private function generateOneContrib(DOMElement|DOMNode $parent, Author $author)
+    {
+        $contrib = $this->createOneNode(
+            'contrib',
+            $parent,
+            '',
+            ['contrib-type' => 'author']
+        );
+        $this->createOneNode(
+            'contrib-id',
+            $contrib,
+            'https://orcid.org/' . $author->orcid,
+            ['contrib-id-type' => 'orcid']
+        );
+        $nameAlternatives = $this->createOneNode('name-alternatives', $contrib);
+
+        $name = $this->createOneNode(
+            'name',
+            $nameAlternatives,
+            '',
+            ['xml:lang' => 'en']
+        );
+        $this->createOneNode('surname', $name, $author->surname_en);
+        $this->createOneNode('given-names', $name, $author->initials_en);
+
+        $name = $this->createOneNode(
+            'name',
+            $nameAlternatives,
+            '',
+            ['xml:lang' => 'ru']
+        );
+        $this->createOneNode('surname', $name, $author->surname_ru);
+        $this->createOneNode('given-names', $name, $author->initials_ru);
+
+        $bio = $this->createOneNode(
+            'bio',
+            $contrib,
+            '',
+            ['xml:lang' => 'en']
+        );
+        $this->createOneNode('p', $bio, $author->rank_en);
+
+        $bio = $this->createOneNode(
+            'bio',
+            $contrib,
+            '',
+            ['xml:lang' => 'ru']
+        );
+        $this->createOneNode('p', $bio, $author->rank_ru);
+
+        $this->createOneNode('email', $contrib, $author->email);
+        $this->createOneNode(
+            'xref',
+            $contrib,
+            '',
+            [
+                'ref-type' => 'aff',
+                'rid' => 'aff1'
+            ]
+        );
+    }
+
+    /**
+     * TODO Создаем блок с местами работы
+     * @param DOMElement|DOMNode $parent - родитель для тега <aff-alternatives>
+     * @param Article $article - модель статьи
+     * @return void
+     * @throws \DOMException
+     */
+    private function generateAffAlternatives(DOMElement|DOMNode $parent, Article $article)
+    {
+        $affAlternatives = $this->createOneNode(
+            'aff-alternatives',
+            $parent,
+            '',
+            ['id' => 'aff1']
+        );
+        $aff_en = $this->createOneNode('aff', $affAlternatives);
+        $this->createOneNode(
+            'institution',
+            $aff_en,
+            'ХЗ ЧЕ ТУТ ПОКА ЧТО ДЕЛАТЬ',
+            ['xml:lang' => 'en']
+        );
+        $aff_ru = $this->createOneNode('aff', $affAlternatives);
+        $this->createOneNode(
+            'institution',
+            $aff_ru,
+            'ХЗ ЧЕ ТУТ ПОКА ЧТО ДЕЛАТЬ',
+            ['xml:lang' => 'ru']
+        );
+    }
+
+    /**
+     * Создаем блок <pub-date>
+     * @param DOMElement|DOMNode $parent - родитель для тега <pub-date>
+     * @param Article $article - модель статьи
+     * @return void
+     * @throws \DOMException
+     */
+    private function generatePubDate(DOMElement|DOMNode $parent, Article $article)
+    {
+        $pubDate = $this->createOneNode(
+            'pub-date',
+            $parent,
+            '',
+            [
+                'date-type' => 'pub',
+                'iso-8601-date' => $article->journal->date,
+                'publication-format' => 'electronic'
+            ]
+        );
+        $this->createOneNode(
+            'day',
+            $pubDate,
+            date('d', strtotime($article->journal->date))
+        );
+        $this->createOneNode(
+            'month',
+            $pubDate,
+            date('m', strtotime($article->journal->date))
+        );
+        $this->createOneNode(
+            'year',
+            $pubDate,
+            date('Y', strtotime($article->journal->date))
+        );
+    }
+
+    /**
+     * Создаем блок <history>
+     * @param DOMElement|DOMNode $parent - родитель для блока <history>
+     * @param Article $article - модель статьи
+     * @return void
+     * @throws \DOMException
+     */
+    private function generateHistory(DOMElement|DOMNode $parent, Article $article)
+    {
+        $history = $this->createOneNode('history', $parent);
+        $date = $this->createOneNode(
+            'date',
+            $history,
+            '',
+            [
+                'date-type' => 'received',
+                'iso-8601-date' => $article->date
+            ]
+        );
+        $this->createOneNode(
+            'day',
+            $date,
+            date('d', strtotime($article->date))
+        );
+        $this->createOneNode(
+            'month',
+            $date,
+            date('m', strtotime($article->date))
+        );
+        $this->createOneNode(
+            'year',
+            $date,
+            date('Y', strtotime($article->date))
+        );
+
+    }
+
+    /**
+     * Создаем блок <permissions>
+     * @param DOMElement|DOMNode $parent родитель для блока <permissions>
+     * @param Article $article - модель статьи
+     * @return void
+     * @throws \DOMException
+     */
+    private function generatePermissions(DOMElement|DOMNode $parent, Article $article)
+    {
+        $permissions = $this->createOneNode('permissions', $parent);
+        $this->createOneNode(
+            'copyright-statement',
+            $permissions,
+            'Copyright ©; Правообладатели на английском',
+            ['xml:lang' => 'en']
+        );
+        $this->createOneNode(
+            'copyright-statement',
+            $permissions,
+            'Copyright ©; Правообладатели на русском',
+            ['xml:lang' => 'ru']
+        );
+        $this->createOneNode(
+            'copyright-year',
+            $permissions,
+            date('Y', strtotime($article->date))
+        );
+        $this->createOneNode(
+            'copyright-holder',
+            $permissions,
+            'Правообладатели на английском без сабачки',
+            ['xml:lang' => 'en']
+        );
+        $this->createOneNode(
+            'copyright-holder',
+            $permissions,
+            'Правообладатели на русском без сабачки',
+            ['xml:lang' => 'ru']
+        );
+        $license = $this->createOneNode('license', $permissions);
+        $this->createOneNode(
+            'ali:license_ref',
+            $license,
+            'https://creativecommons.org/licenses/by/4.0',
+            ['xmlns:ali' => 'http://www.niso.org/schemas/ali/1.0/']
+        );
+    }
+
+    /**
+     * Создаем блоки <abstract> и <trans-abstract>
+     * @param DOMElement|DOMNode $parent - родитель для блоков  <abstract> и <trans-abstract>
+     * @param Article $article - модель статьи
+     * @return void
+     * @throws \DOMException
+     */
+    private function generateAbstract(DOMElement|DOMNode $parent, Article $article)
+    {
+        $abstract = $this->createOneNode('abstract', $parent, '', ['xml:lang' => 'en']);
+        $this->createOneNode('p', $abstract, $article->annotation_en);
+
+        $transAbstract = $this->createOneNode('trans-abstract', $parent, '', ['xml:lang' => 'en']);
+        $this->createOneNode('p', $transAbstract, $article->annotation_en);
+    }
+
+    /**
+     * Создаем блоки <kwd-group> - ключевые слова
+     * @param DOMElement|DOMNode $parent - родитель для блоков <kwd-group>
+     * @param Article $article - модель статьи
+     * @return void
+     * @throws \DOMException
+     */
+    private function generateKwdGroup(DOMElement|DOMNode $parent, Article $article)
+    {
+        $kwdGroupEng = $this->createOneNode(
+            'kwd-group',
+            $parent,
+            '',
+            ['xml:lang' => 'en']
+        );
+
+        foreach ($article->keywords_eng as $keyword) {
+            $this->createOneNode('kwd', $kwdGroupEng, $keyword->pivot->keyword_id);
+        }
+
+        $kwdGroupRu = $this->createOneNode(
+            'kwd-group',
+            $parent,
+            '',
+            ['xml:lang' => 'ru']
+        );
+
+        foreach ($article->keywords_ru as $keyword) {
+            $this->createOneNode('kwd', $kwdGroupRu, $keyword->pivot->keyword_id);
+        }
+    }
+
+
+    /**
+     * @param string $nodeName - название создаваемого тега
+     * @param DOMDocument|DOMElement $parent - родитель для создаваемого тега
+     * @param string|null $nodeValue - значение создаваемого тега (контент заключенный в него)
+     * @param array|null $attrs - массив атрибутов в котором ключ - название аттрибута, а значение - значение
+     * @return DOMElement - объект созданного тега
+     * @throws \DOMException
+     */
+    private function createOneNode (
+        string $nodeName,
+        DOMDocument|DOMElement $parent,
+        ?string $nodeValue = null,
+        ?array $attrs = null,
+    ): DOMElement  {
+        $created = $this->dom->createElement($nodeName, $nodeValue ?? '');
+        if($attrs !== null) {
+            foreach ($attrs as $attrName => $attrValue) {
+                $created->setAttribute($attrName, $attrValue);
+            }
+        }
+        return $parent->appendChild($created);
+    }
+
+
+}
