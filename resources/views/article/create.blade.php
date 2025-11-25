@@ -86,6 +86,7 @@
                     <textarea name="annotation_en" class="form-control bg-dark text-light border-secondary" rows="5"
                               placeholder="Введите аннотацию на английском">{{old('annotation_en')}}</textarea>
                 </div>
+
                 <!-- Поле: Последняя страница -->
                 <div class="mb-3">
                     <label class="form-label">Последняя страница</label>
@@ -94,6 +95,20 @@
                            placeholder="Номер последней страницы">
                 </div>
 
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Правообладатели (ENG)</label>
+                <input type="text" name="copyright_en" value="{{old('copyright_en')}}"
+                       class="form-control bg-dark text-light border-secondary"
+                       placeholder="Правообладатели на английском">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Правообладатели (РУС)</label>
+                <input type="text" name="copyright_ru" value="{{old('copyright_ru')}}"
+                       class="form-control bg-dark text-light border-secondary"
+                       placeholder="Правообладатели на русском">
             </div>
 
             <div class="mb-3">
@@ -151,8 +166,8 @@
                                     </div>
                                     <div class="mb-2">
                                         <label class="form-label">Должность (РУС)</label>
-                                        <input type="text" name="authors[{{$i}}][job_ru]"
-                                               value="{{old('authors.'.$i.'.job_ru')}}"
+                                        <input type="text" name="authors[{{$i}}][position_ru]"
+                                               value="{{old('authors.'.$i.'.position_ru')}}"
                                                class="form-control bg-dark text-light border-secondary"
                                                placeholder="Должность на русском">
                                     </div>
@@ -162,6 +177,12 @@
                                                value="{{old('authors.'.$i.'.rank_ru')}}"
                                                class="form-control bg-dark text-light border-secondary"
                                                placeholder="Ученое звание на русском">
+                                    </div>
+                                    <div class="mb-3 flex-grow-1">
+                                        <label class="form-label">Место работы (РУС)</label>
+                                        <input type="text" name="authors[{{$i}}][job_ru]" value="{{old('authors.'.$i.'.job_ru')}}"
+                                               class="form-control bg-dark text-light border-secondary"
+                                               placeholder="Место работы на русском">
                                     </div>
                                     <div class="mb-2">
                                         <label class="form-label">ORCID</label>
@@ -188,8 +209,8 @@
                                     </div>
                                     <div class="mb-2">
                                         <label class="form-label">Должность (ENG)</label>
-                                        <input type="text" name="authors[{{$i}}][job_en]"
-                                               value="{{old('authors.'.$i.'.job_en')}}"
+                                        <input type="text" name="authors[{{$i}}][position_en]"
+                                               value="{{old('authors.'.$i.'.position_en')}}"
                                                class="form-control bg-dark text-light border-secondary"
                                                placeholder="Должность на английском">
                                     </div>
@@ -200,6 +221,15 @@
                                                class="form-control bg-dark text-light border-secondary"
                                                placeholder="Ученое звание на английском">
                                     </div>
+
+
+                                    <div class="mb-3 flex-grow-1">
+                                        <label class="form-label">Место работы (ENG)</label>
+                                        <input type="text" name="authors[{{$i}}][job_en]" value="{{old('authors.'.$i.'.job_en')}}"
+                                               class="form-control bg-dark text-light border-secondary"
+                                               placeholder="Место работы на английском">
+                                    </div>
+
                                     <div class="mb-2">
                                         <label class="form-label">Email</label>
                                         <input type="email" name="authors[{{$i}}][email]"

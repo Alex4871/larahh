@@ -28,6 +28,8 @@ class StoreArticleRequest extends FormRequest
             'keywords_eng' => ['required', 'string'],
             'references_ru' => ['required', 'string'],
             'references_en' => ['required', 'string'],
+            'copyright_ru' => ['required', 'string', 'max:255'],
+            'copyright_en' => ['required', 'string', 'max:255'],
 
             // Правила для массива авторов
             'authors' => ['required', 'array'],
@@ -37,6 +39,8 @@ class StoreArticleRequest extends FormRequest
             'authors.*.initials_en' => ['required', 'string:150'],
             'authors.*.orcid' => ['required', 'string', 'size:19'],
             'authors.*.email' => ['required', 'email', 'max:50', 'unique:authors,email'],
+            'authors.*.position_ru' => ['required', 'string', 'max:255'],
+            'authors.*.position_en' => ['required', 'string', 'max:255'],
             'authors.*.job_ru' => ['required', 'string', 'max:255'],
             'authors.*.job_en' => ['required', 'string', 'max:255'],
             'authors.*.rank_ru' => ['required', 'string', 'max:255'],

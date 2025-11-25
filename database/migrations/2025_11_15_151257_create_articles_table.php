@@ -23,6 +23,8 @@ return new class extends Migration
             $table->date('date');
             $table->text('references_ru')->nullable();
             $table->text('references_en')->nullable();
+            $table->text('copyright_en')->nullable();
+            $table->text('copyright_ru')->nullable();
         });
     }
 

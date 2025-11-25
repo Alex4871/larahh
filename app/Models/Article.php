@@ -14,7 +14,7 @@ class Article extends Model
         'journal_id', 'doi', 'edn', 'udk',
         'title_ru', 'title_en', 'annotation_ru',
         'annotation_en', 'f_page', 'l_page', 'date',
-        'references_ru', 'references_en'
+        'references_ru', 'references_en', 'copyright_ru', 'copyright_en'
     ];
     public $timestamps = false;
 

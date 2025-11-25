@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('email', 50)->unique();
             $table->string('job_ru', 255);
             $table->string('job_en', 255);
+            $table->string('position_ru', 255);
+            $table->string('position_en', 255);
             $table->string('rank_ru', 255);
             $table->string('rank_en', 255);
         });

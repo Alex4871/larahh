@@ -147,7 +147,6 @@ class XmlGeneratorService
         $this->createOneNode('funding-group', $articleMeta);
     }
 
-
     /**
      * Создаем блок <article-categories>
      * @param DOMElement|DOMNode $parent - родитель для блока <article-categories>
@@ -234,19 +233,22 @@ class XmlGeneratorService
             'contrib-group',
             $parent
         );
-        foreach ($authors as $author) {
-            $this->generateOneContrib($contribGroup, $author);
+
+        foreach ($authors as $author_key => $author_value) {
+            $authorSerialNumber = $author_key + 1;
+            $this->generateOneContrib($contribGroup, $author_value, $authorSerialNumber);
         }
     }
 
     /**
-     * Создаем блок <contrib> - один аавтор
+     * Создаем блок <contrib> - один автор
      * @param DOMElement|DOMNode $parent - родитель для блока <contrib>
-     * @param Author $author
+     * @param Author $author - модель Автора
+     * @param int $authorSerialNumber - порядковый номер автора в статье
      * @return void
      * @throws \DOMException
      */
-    private function generateOneContrib(DOMElement|DOMNode $parent, Author $author)
+    private function generateOneContrib(DOMElement|DOMNode $parent, Author $author, int $authorSerialNumber = 1)
     {
         $contrib = $this->createOneNode(
             'contrib',
@@ -303,7 +305,7 @@ class XmlGeneratorService
             '',
             [
                 'ref-type' => 'aff',
-                'rid' => 'aff1'
+                'rid' => $authorSerialNumber
             ]
         );
     }
@@ -493,7 +495,7 @@ class XmlGeneratorService
         );
 
         foreach ($article->keywords_eng as $keyword) {
-            $this->createOneNode('kwd', $kwdGroupEng, $keyword->pivot->keyword_id);
+            $this->createOneNode('kwd', $kwdGroupEng, $keyword->name);
         }
 
         $kwdGroupRu = $this->createOneNode(
@@ -504,7 +506,7 @@ class XmlGeneratorService
         );
 
         foreach ($article->keywords_ru as $keyword) {
-            $this->createOneNode('kwd', $kwdGroupRu, $keyword->pivot->keyword_id);
+            $this->createOneNode('kwd', $kwdGroupRu, $keyword->name);
         }
     }
 
@@ -569,6 +571,12 @@ class XmlGeneratorService
             }
         }
         return $parent->appendChild($created);
+    }
+
+
+    private function getUniqueWorkPlace(array $authors)
+    {
+
     }
 
 
