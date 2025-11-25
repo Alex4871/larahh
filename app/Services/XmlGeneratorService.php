@@ -508,6 +508,45 @@ class XmlGeneratorService
         }
     }
 
+    /**
+     * Создаем блок <ref-list> - писок литературы
+     * @param DOMElement|DOMNode $parent - родитель для блока <ref-list>
+     * @param Article $article - модель статьи
+     * @return void
+     * @throws \DOMException
+     */
+    private function generateRefList(DOMElement|DOMNode $parent, Article $article)
+    {
+        $referencesRu = explode("\n", $article->references_ru);
+        $referencesEng = explode("\n", $article->references_en);
+
+        $count = count($referencesEng);
+
+        $refList = $this->createOneNode('ref-list', $parent);
+
+        for ($i = 0; $i < $count; $i++) {
+
+            $ref = $this->createOneNode('ref', $refList, '', ['id' => 'B'.$i+1]);
+            $this->createOneNode('label', $ref, $i+1 . '.');
+            $citationAlternatives = $this->createOneNode('citation-alternatives', $ref);
+
+            $this->createOneNode(
+                'mixed-citation',
+                $citationAlternatives,
+                $referencesEng[$i],
+                ['xml:lang' => 'en']
+            );
+            $this->createOneNode(
+                'mixed-citation',
+                $citationAlternatives,
+                $referencesRu[$i],
+                ['xml:lang' => 'ru']
+            );
+
+        }
+
+    }
+
 
     /**
      * @param string $nodeName - название создаваемого тега
