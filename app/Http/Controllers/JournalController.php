@@ -32,7 +32,7 @@ class JournalController extends Controller
 
     public function xml(Journal $journal)
     {
-        $article = Article::findOrFail(2);
+        $article = Article::findOrFail(1);
         dd($this->xmlGenerator->generateXML($journal, $article));
     }
 

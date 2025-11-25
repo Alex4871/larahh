@@ -8,6 +8,7 @@ use App\Models\Journal;
 use DOMDocument;
 use DOMElement;
 use DOMNode;
+use Illuminate\Database\Eloquent\Collection;
 
 class XmlGeneratorService
 {
@@ -229,14 +230,15 @@ class XmlGeneratorService
     private function generateContribGroup(DOMElement|DOMNode $parent, Article $article)
     {
         $authors = $article->authors;
+        $uniqueWorkPlaces = $this->getUniqueWorkPlaces($authors);
         $contribGroup = $this->createOneNode(
             'contrib-group',
             $parent
         );
 
-        foreach ($authors as $author_key => $author_value) {
-            $authorSerialNumber = $author_key + 1;
-            $this->generateOneContrib($contribGroup, $author_value, $authorSerialNumber);
+        foreach ($authors as $author) {
+            $authorIdAttribute = array_search($author->job_ru, $uniqueWorkPlaces);
+            $this->generateOneContrib($contribGroup, $author, $authorIdAttribute);
         }
     }
 
@@ -248,7 +250,7 @@ class XmlGeneratorService
      * @return void
      * @throws \DOMException
      */
-    private function generateOneContrib(DOMElement|DOMNode $parent, Author $author, int $authorSerialNumber = 1)
+    private function generateOneContrib(DOMElement|DOMNode $parent, Author $author, string $authorIdAttribute): void
     {
         $contrib = $this->createOneNode(
             'contrib',
@@ -305,7 +307,7 @@ class XmlGeneratorService
             '',
             [
                 'ref-type' => 'aff',
-                'rid' => $authorSerialNumber
+                'rid' => $authorIdAttribute
             ]
         );
     }
@@ -574,9 +576,32 @@ class XmlGeneratorService
     }
 
 
-    private function getUniqueWorkPlace(array $authors)
+    /**
+     * Получаем массив уникальных мест работы на русском и английском языках
+     * Структура следующая:
+     * [
+     * 'aff1' => ['ru' => 'МГУ', 'en' => 'Lomonosov Moscow State University'],
+     * 'aff2' => ['ru' => 'Шаньдунский университет', 'en' => 'Shandong University'],
+     * ]
+     * @param Collection $authors - коллекция моделей авторов
+     * @return array - массив с уникальными местами работы авторов конкретной статьи
+     */
+    private function getUniqueWorkPlaces(Collection $authors): array
     {
+        $seen = [];
+        $uniqueWorkPlaces = [];
 
+        foreach ($authors as $author) {
+           $jobRu = trim($author->job_ru);
+           //$jobEng = trim($author->job_en);
+           //$key = $jobEng . '|' . $jobRu;
+           $key = $jobRu;
+           if (!isset($seen[$key])) {
+               $seen[$key] = true;
+           }
+           $uniqueWorkPlaces['aff' . count($seen)] = $jobRu;
+        }
+        return $uniqueWorkPlaces;
     }
 
 
