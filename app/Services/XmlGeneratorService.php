@@ -231,13 +231,16 @@ class XmlGeneratorService
     {
         $authors = $article->authors;
         $uniqueWorkPlaces = $this->getUniqueWorkPlaces($authors);
+        $ruUniqueWorkPlaces = array_map(function ($ruWorkPlace) {
+            return $ruWorkPlace['ru'] ?? '';
+        }, $uniqueWorkPlaces);
         $contribGroup = $this->createOneNode(
             'contrib-group',
             $parent
         );
 
         foreach ($authors as $author) {
-            $authorIdAttribute = array_search($author->job_ru, $uniqueWorkPlaces);
+            $authorIdAttribute = array_search($author->job_ru, $ruUniqueWorkPlaces);
             $this->generateOneContrib($contribGroup, $author, $authorIdAttribute);
         }
     }
@@ -313,7 +316,6 @@ class XmlGeneratorService
     }
 
     /**
-     * TODO Создаем блок с местами работы
      * @param DOMElement|DOMNode $parent - родитель для тега <aff-alternatives>
      * @param Article $article - модель статьи
      * @return void
@@ -321,26 +323,28 @@ class XmlGeneratorService
      */
     private function generateAffAlternatives(DOMElement|DOMNode $parent, Article $article)
     {
-        $affAlternatives = $this->createOneNode(
-            'aff-alternatives',
-            $parent,
-            '',
-            ['id' => 'aff1']
-        );
-        $aff_en = $this->createOneNode('aff', $affAlternatives);
-        $this->createOneNode(
-            'institution',
-            $aff_en,
-            'ХЗ ЧЕ ТУТ ПОКА ЧТО ДЕЛАТЬ',
-            ['xml:lang' => 'en']
-        );
-        $aff_ru = $this->createOneNode('aff', $affAlternatives);
-        $this->createOneNode(
-            'institution',
-            $aff_ru,
-            'ХЗ ЧЕ ТУТ ПОКА ЧТО ДЕЛАТЬ',
-            ['xml:lang' => 'ru']
-        );
+        $authors = $article->authors;
+        $uniqueWorkPlaces = $this->getUniqueWorkPlaces($authors);
+
+        foreach ($uniqueWorkPlaces as $uniqueWorkPlaceKey => $uniqueWorkPlaceValues) {
+            $affAlternatives = $this->createOneNode(
+                'aff-alternatives',
+                $parent,
+                '',
+                ['id' => $uniqueWorkPlaceKey]
+            );
+            foreach ($uniqueWorkPlaceValues as $lang => $instituteName) {
+                $aff = $this->createOneNode('aff', $affAlternatives);
+                $this->createOneNode(
+                    'institution',
+                    $aff,
+                    $instituteName,
+                    ['xml:lang' => $lang]
+                );
+            }
+
+        }
+
     }
 
     /**
@@ -429,13 +433,13 @@ class XmlGeneratorService
         $this->createOneNode(
             'copyright-statement',
             $permissions,
-            'Copyright ©; Правообладатели на английском',
+            'Copyright ©;' . $article->copyright_en,
             ['xml:lang' => 'en']
         );
         $this->createOneNode(
             'copyright-statement',
             $permissions,
-            'Copyright ©; Правообладатели на русском',
+            'Copyright ©;' . $article->copyright_ru,
             ['xml:lang' => 'ru']
         );
         $this->createOneNode(
@@ -446,13 +450,13 @@ class XmlGeneratorService
         $this->createOneNode(
             'copyright-holder',
             $permissions,
-            'Правообладатели на английском без сабачки',
+            $article->copyright_en,
             ['xml:lang' => 'en']
         );
         $this->createOneNode(
             'copyright-holder',
             $permissions,
-            'Правообладатели на русском без сабачки',
+            $article->copyright_ru,
             ['xml:lang' => 'ru']
         );
         $license = $this->createOneNode('license', $permissions);
@@ -476,8 +480,8 @@ class XmlGeneratorService
         $abstract = $this->createOneNode('abstract', $parent, '', ['xml:lang' => 'en']);
         $this->createOneNode('p', $abstract, $article->annotation_en);
 
-        $transAbstract = $this->createOneNode('trans-abstract', $parent, '', ['xml:lang' => 'en']);
-        $this->createOneNode('p', $transAbstract, $article->annotation_en);
+        $transAbstract = $this->createOneNode('trans-abstract', $parent, '', ['xml:lang' => 'ru']);
+        $this->createOneNode('p', $transAbstract, $article->annotation_ru);
     }
 
     /**
@@ -593,13 +597,12 @@ class XmlGeneratorService
 
         foreach ($authors as $author) {
            $jobRu = trim($author->job_ru);
-           //$jobEng = trim($author->job_en);
-           //$key = $jobEng . '|' . $jobRu;
-           $key = $jobRu;
+           $jobEng = trim($author->job_en);
+           $key = $jobRu . '|' . $jobEng;
            if (!isset($seen[$key])) {
                $seen[$key] = true;
            }
-           $uniqueWorkPlaces['aff' . count($seen)] = $jobRu;
+           $uniqueWorkPlaces['aff' . count($seen)] = ['ru' => $jobRu, 'en' => $jobEng];
         }
         return $uniqueWorkPlaces;
     }
