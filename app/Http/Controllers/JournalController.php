@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreJournalRequest;
+use App\Http\Requests\XML\JatsXmlGenerator;
 use App\Models\Article;
 use App\Models\Journal;
 use App\Services\XmlGeneratorService;
@@ -13,8 +14,13 @@ use Illuminate\View\View;
 
 class JournalController extends Controller
 {
+//    public function __construct(
+//        protected readonly XmlGeneratorService $xmlGenerator
+//    )
+//    {}
+
     public function __construct(
-        protected readonly XmlGeneratorService $xmlGenerator
+        protected readonly JatsXmlGenerator $generator
     )
     {}
 
@@ -33,7 +39,8 @@ class JournalController extends Controller
     public function xml(Journal $journal)
     {
         $article = Article::findOrFail(1);
-        dd($this->xmlGenerator->generateXML($journal, $article));
+        ///dd($this->xmlGenerator->generateXML($journal, $article));
+        dd($this->generator->generate($journal, $article));
     }
 
 

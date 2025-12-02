@@ -39,10 +39,10 @@ class DomHelper
     /**
      * Добавляем один тег в другой
      * @param DOMElement $node - тег, который надо вставить
-     * @param DOMElement $parent - родитель, в который нужно вставить тег
+     * @param DOMDocument|DOMElement $parent - родитель, в который нужно вставить тег
      * @return DOMElement - добавленный узел
      */
-    public function append(DOMElement $node, DOMElement $parent): DOMElement
+    public function append(DOMElement $node, DOMDocument|DOMElement $parent): DOMElement
     {
         return $parent->appendChild($node);
     }

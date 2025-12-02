@@ -7,6 +7,7 @@ use App\Models\Author;
 use App\Models\Journal;
 use DOMDocument;
 use DOMElement;
+use DOMException;
 use DOMNode;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -562,7 +563,7 @@ class XmlGeneratorService
      * @param string|null $nodeValue - значение создаваемого тега (контент заключенный в него)
      * @param array|null $attrs - массив атрибутов в котором ключ - название аттрибута, а значение - значение
      * @return DOMElement - объект созданного тега
-     * @throws \DOMException
+     * @throws DOMException
      */
     private function createOneNode (
         string $nodeName,
